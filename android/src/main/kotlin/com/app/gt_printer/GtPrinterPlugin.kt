@@ -1,5 +1,6 @@
 package com.app.gt_printer
 
+
 import android.Manifest
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
@@ -16,6 +17,7 @@ import androidx.core.app.ActivityCompat
 import com.caysn.autoreplyprint.AutoReplyPrint
 import com.caysn.autoreplyprint.AutoReplyPrint.CP_OnBluetoothDeviceDiscovered_Callback
 import com.caysn.autoreplyprint.AutoReplyPrint.CP_OnNetPrinterDiscovered_Callback
+import com.sun.jna.Native
 import com.sun.jna.ptr.IntByReference
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -28,6 +30,7 @@ import io.flutter.plugin.common.MethodChannel.Result
 /** GtPrinterPlugin */
 class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
   ActivityAware {
+
   /// The MethodChannel that will the communication between Flutter and native Android
   ///
   /// This local reference serves to register the plugin with the Flutter Engine and unregister it
@@ -77,6 +80,9 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
     override fun run() {
       Log.d(TAG, "Method Called: ${call.method}")
       when (call.method) {
+        "getPlatformVersion" -> {
+          result.success("Android ${android.os.Build.VERSION.RELEASE}")
+        }
         "onDiscovery" -> {
           onDiscovery(call, result)
         }
@@ -213,7 +219,7 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
           return
         }
         if (!adapter.isEnabled) {
-          throw Exception(message = "Failed to enable bluetooth adapter")
+          throw Exception("Failed to enable bluetooth adapter")
         }
       }
     }
@@ -228,7 +234,7 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
     if (ok) {
       isEnabled = true
     } else {
-      throw Exception(message = "Please enable gps else will not search ble printer")
+      throw Exception("Please enable gps else will not search ble printer")
 //      val intent = Intent()
 //      intent.setAction(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
 //      startActivityForResult(intent, 2)

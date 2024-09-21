@@ -1,3 +1,5 @@
+import 'package:gt_printer/models/enums.dart';
+import 'package:gt_printer/models/models.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'gt_printer_method_channel.dart';
@@ -25,5 +27,11 @@ abstract class GtPrinterPlatform extends PlatformInterface {
 
   Future<String?> getPlatformVersion() {
     throw UnimplementedError('platformVersion() has not been implemented.');
+  }
+
+  Future<List<PrinterModel>?> onDiscovery(
+      {PrinterPortType type = PrinterPortType.tcp}) {
+    throw UnimplementedError(
+        'onDiscovery(PrinterPortType type) has not been implemented.');
   }
 }
