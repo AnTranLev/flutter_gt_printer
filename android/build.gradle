@@ -60,6 +60,7 @@ android {
         testImplementation("org.mockito:mockito-core:5.0.0")
         implementation(name: "autoreplyprint", ext: "aar")
         implementation(name: "barcode_scanner_library_v2.6.19.0-release", ext: "aar")
+        implementation 'com.google.code.gson:gson:2.10.1'
     }
 
     testOptions {

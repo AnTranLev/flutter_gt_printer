@@ -37,10 +37,7 @@ class GTPrinterBridgeModule(private val context: Context) {
                 AutoReplyPrint.CP_Port_EnumUsb_Helper.EnumUsb()
             listUsbPort?.let {
                 for (usbPort in it) {
-                    h =
-                        AutoReplyPrint.INSTANCE.CP_Port_OpenUsb(
-                            usbPort, 1
-                        )
+                    h = AutoReplyPrint.INSTANCE.CP_Port_OpenUsb(usbPort, 1)
                     if (h != Pointer.NULL) {
                         port = usbPort
                         break
@@ -49,15 +46,9 @@ class GTPrinterBridgeModule(private val context: Context) {
             }
 
             promise.success(port)
-            AutoReplyPrint.INSTANCE.CP_Port_Close(
-                h
-            )
+            AutoReplyPrint.INSTANCE.CP_Port_Close(h)
         } catch (e: Exception) {
-            promise.error(
-                "PortDiscoveryError",
-                "An error occurred during port discovery",
-                e
-            )
+            promise.error("PortDiscoveryError", "An error occurred during port discovery", e)
         }
     }
 

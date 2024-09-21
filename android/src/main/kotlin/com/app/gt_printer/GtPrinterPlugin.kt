@@ -1,18 +1,33 @@
 package com.app.gt_printer
 
+import android.Manifest
+import android.app.Activity
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.LocationManager
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.annotation.NonNull
-
+import androidx.core.app.ActivityCompat
+import com.caysn.autoreplyprint.AutoReplyPrint
+import com.caysn.autoreplyprint.AutoReplyPrint.CP_OnBluetoothDeviceDiscovered_Callback
+import com.caysn.autoreplyprint.AutoReplyPrint.CP_OnNetPrinterDiscovered_Callback
+import com.sun.jna.ptr.IntByReference
 import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 
 /** GtPrinterPlugin */
-class GtPrinterPlugin: FlutterPlugin, MethodCallHandler {
+class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
+  ActivityAware {
   /// The MethodChannel that will the communication between Flutter and native Android
   ///
   /// This local reference serves to register the plugin with the Flutter Engine and unregister it
@@ -20,10 +35,30 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler {
   private lateinit var channel : MethodChannel
 
   private val TAG = "GTPrinterBridgeModule"
+  private lateinit var context: Context
+  private lateinit var activity: Activity
+
+  private var printers: ArrayList<PrinterInfo> = ArrayList()
+
+  override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+    activity = binding.activity
+  }
+
+  override fun onDetachedFromActivityForConfigChanges() {
+  }
+
+  override fun onReattachedToActivityForConfigChanges(
+    binding: ActivityPluginBinding
+  ) {
+  }
+
+  override fun onDetachedFromActivity() {
+  }
 
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     channel = MethodChannel(flutterPluginBinding.binaryMessenger, "gt_printer")
     channel.setMethodCallHandler(this)
+    context = flutterPluginBinding.applicationContext
   }
 
   override fun onMethodCall(call: MethodCall, rawResult: Result) {
@@ -87,9 +122,6 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler {
       "BT" -> {
         onDiscoveryPrinter(call, Discovery.PORTTYPE_BLUETOOTH, result)
       }
-      "ALL" -> {
-        onDiscoveryPrinter(call, Discovery.TYPE_PRINTER, result)
-      }
       else -> result.notImplemented()
     }
   }
@@ -97,25 +129,36 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler {
   /**
    * Discovery Printers GENERIC
    */
-  private fun onDiscoveryPrinter(@NonNull call: MethodCall, portType: Int, @NonNull result: Result) {
+  private fun onDiscoveryPrinter(@NonNull call: MethodCall, portType: String, @NonNull result: Result) {
     var delay:Long = 7000;
     if(portType == Discovery.PORTTYPE_USB){
       delay = 1000;
     }
     printers.clear()
-    var filter = FilterOption()
-    filter.portType = portType;
+
     Log.e("onDiscoveryPrinter", "Filter = $portType");
 
-    var resp = EpsonEposPrinterResult("onDiscoveryPrinter", false)
+    var resp = PrinterResult("onDiscoveryPrinter", false)
+
+    when (portType) {
+      "TCP" -> {
+        onDiscoverNet()
+      }
+      "USB" -> {
+        onDiscoverUsb()
+      }
+      "BT" -> {
+        onDiscoverBle()
+      }
+      else -> result.notImplemented()
+    }
+
     try {
-      Discovery.start(context, filter, mDiscoveryListener)
       Handler(Looper.getMainLooper()).postDelayed({
         resp.success = true
         resp.message = "Successfully!"
         resp.content = printers
         result.success(resp.toJSON())
-        stopDiscovery()
       }, delay)
     } catch (e: Exception) {
       Log.e("onDiscoveryPrinter", "Start not working ${call.method}");
@@ -125,4 +168,142 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler {
       result.success(resp.toJSON())
     }
   }
+
+  private var inBleEnum = false
+
+  private fun onDiscoverBle() {
+    if (!checkBluetoothPermission()) return
+    if (inBleEnum) return
+    inBleEnum = true
+    Thread {
+      val cancel = IntByReference(0)
+      val callback = CP_OnBluetoothDeviceDiscovered_Callback { deviceName, deviceAddress, privateData ->
+            if (!printers.any { it.bdAddress == deviceAddress }) printers.add(
+              PrinterInfo(bdAddress = deviceAddress, ipAddress = deviceAddress, model = deviceName, type = Discovery.PORTTYPE_BLUETOOTH)
+            )
+        }
+      AutoReplyPrint.INSTANCE.CP_Port_EnumBleDevice(
+        7000, // Timeout
+        cancel,
+        callback,
+        null
+      )
+      inBleEnum = false
+    }.start()
+  }
+
+  private fun enableBluetooth() {
+    val bluetoothManager =  context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+    val adapter: BluetoothAdapter? = bluetoothManager.adapter
+
+    if (null != adapter) {
+      if (!adapter.isEnabled) {
+        if (ActivityCompat.checkSelfPermission(
+            context,
+            Manifest.permission.BLUETOOTH_CONNECT
+          ) != PackageManager.PERMISSION_GRANTED
+        ) {
+          // TODO: Consider calling
+          //    ActivityCompat#requestPermissions
+          // here to request the missing permissions, and then overriding
+          //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+          //                                          int[] grantResults)
+          // to handle the case where the user grants the permission. See the documentation
+          // for ActivityCompat#requestPermissions for more details.
+          return
+        }
+        if (!adapter.isEnabled) {
+          throw Exception(message = "Failed to enable bluetooth adapter")
+        }
+      }
+    }
+  }
+
+  private fun checkGPSEnabled(): Boolean {
+    var isEnabled = false
+    val lm =
+      context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    val ok =
+      lm.isProviderEnabled(LocationManager.GPS_PROVIDER)
+    if (ok) {
+      isEnabled = true
+    } else {
+      throw Exception(message = "Please enable gps else will not search ble printer")
+//      val intent = Intent()
+//      intent.setAction(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+//      startActivityForResult(intent, 2)
+    }
+    return isEnabled
+  }
+
+  private fun checkLocationPermission(): Boolean {
+    var hasPermission = false
+    if (Build.VERSION.SDK_INT >= 23) {
+      if (ActivityCompat.checkSelfPermission(
+          context,
+          Manifest.permission.ACCESS_FINE_LOCATION
+        ) != PackageManager.PERMISSION_GRANTED
+      ) {
+        val permissionLOCATIONGPS = arrayOf(
+          Manifest.permission.ACCESS_COARSE_LOCATION,
+          Manifest.permission.ACCESS_FINE_LOCATION,
+          Manifest.permission.READ_PHONE_STATE
+        )
+        ActivityCompat.requestPermissions(
+          activity,
+          permissionLOCATIONGPS,
+          1
+        )
+      } else {
+        hasPermission = true
+      }
+    } else {
+      hasPermission = true
+    }
+    return hasPermission
+  }
+
+  private fun checkBluetoothPermission(): Boolean {
+    return checkGPSEnabled() && checkLocationPermission()
+  }
+
+  private var inNetEnum = false
+
+  private fun onDiscoverNet() {
+    if (inNetEnum) return
+    inNetEnum = true
+    Thread {
+      val cancel =
+        IntByReference(0)
+      val callback =
+        CP_OnNetPrinterDiscovered_Callback { localIp, discoveredMac, discoveredIp, discoveredName, privateData ->
+          activity.runOnUiThread {
+            if (!printers.any { it.ipAddress == discoveredIp }) printers.add(
+              PrinterInfo(bdAddress = discoveredIp, ipAddress = discoveredIp, model = discoveredName, macAddress = discoveredMac, type = Discovery.PORTTYPE_TCP)
+            )
+          }
+        }
+      AutoReplyPrint.INSTANCE.CP_Port_EnumNetPrinter(
+        3000,
+        cancel,
+        callback,
+        null
+      )
+      inNetEnum = false
+    }.start()
+  }
+
+  private fun onDiscoverUsb() {
+    val devicePaths = AutoReplyPrint.CP_Port_EnumUsb_Helper.EnumUsb()
+    if (devicePaths != null) {
+      for (i in devicePaths.indices) {
+        val name = devicePaths[i]
+
+        if (!printers.any { it.model == name }) printers.add(
+          PrinterInfo(model = name, type = Discovery.PORTTYPE_USB)
+        )
+      }
+    }
+  }
 }
+
