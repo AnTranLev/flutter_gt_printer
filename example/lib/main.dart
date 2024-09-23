@@ -186,7 +186,7 @@ class _MyAppState extends State<MyApp> {
       List<Map<String, dynamic>> commands = [];
 
       // Load the image as a byte array
-      final ByteData imageData = await rootBundle.load('assets/barcode.png');
+      final ByteData imageData = await rootBundle.load('assets/receipt.png');
       // Convert the image to Uint8List
       final Uint8List bytes = imageData.buffer.asUint8List();
       // Decode the image using the 'image' package
@@ -203,6 +203,8 @@ class _MyAppState extends State<MyApp> {
       String base64String = base64Encode(resizedImageBytes);
 
       commands.add(command.printBitmap(base64String));
+
+      logger.d('${resizedImage.width} - ${resizedImage.height}');
 
       final data = await GtPrinterPlatform.instance.onPrint(printer, commands);
       logger.d('Did discover ${data?.length}');
