@@ -168,6 +168,7 @@ class _MyAppState extends State<MyApp> {
 
       commands
           .add(command.append('Đây bước chân kẻ phong trần Lang thang cõi\n'));
+      commands.add(command.append("麻辣香锅（上梅林店）\r\n2018年2月7日15:51:00\r\n\r\n"));
 
       final data = await GtPrinterPlatform.instance.onPrint(printer, commands);
       logger.d('Did discover ${data?.length}');

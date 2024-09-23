@@ -437,6 +437,9 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
         onGenerateCommand(printerPointer, it)
       }
 
+      AutoReplyPrint.INSTANCE.CP_Pos_FeedAndHalfCutPaper(printerPointer)
+      disconnectPrinter(printerPointer)
+
       resp.success = true
       resp.message = "Printed $target"
       Log.d(logTag, resp.toJSON())
@@ -505,28 +508,30 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
             "addBarcode: $barcode $type $textPosition"
           )
 
-          AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeUnitWidth(
-            h,
-            2
-          )
-          AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeHeight(
-            h,
-            60
-          )
-          AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeReadableTextFontType(
-            h,
-            0
-          )
-          AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeReadableTextPosition(
-            h,
-            textPosition
-          )
+          Test_Pos_PrintBarcode(h)
 
-          AutoReplyPrint.INSTANCE.CP_Pos_PrintBarcode(
-            h,
-            type,
-            barcode
-          )
+//          AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeUnitWidth(
+//            h,
+//            2
+//          )
+//          AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeHeight(
+//            h,
+//            60
+//          )
+//          AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeReadableTextFontType(
+//            h,
+//            0
+//          )
+//          AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeReadableTextPosition(
+//            h,
+//            textPosition
+//          )
+//
+//          AutoReplyPrint.INSTANCE.CP_Pos_PrintBarcode(
+//            h,
+//            type,
+//            barcode
+//          )
         }
       }
     }
@@ -538,6 +543,47 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
         printer
       )
     }
+  }
+
+  fun Test_Pos_PrintBarcode(h: Pointer?) {
+    AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeUnitWidth(
+      h,
+      2
+    )
+    AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeHeight(
+      h,
+      60
+    )
+    AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeReadableTextFontType(
+      h,
+      0
+    )
+    AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeReadableTextPosition(
+      h,
+      AutoReplyPrint.CP_Pos_BarcodeTextPrintPosition_BelowBarcode
+    )
+    AutoReplyPrint.INSTANCE.CP_Pos_PrintBarcode(
+      h,
+      AutoReplyPrint.CP_Pos_BarcodeType_UPCA,
+      "01234567890"
+    )
+    AutoReplyPrint.INSTANCE.CP_Pos_PrintBarcode(
+      h,
+      AutoReplyPrint.CP_Pos_BarcodeType_UPCE,
+      "123456"
+    )
+    AutoReplyPrint.INSTANCE.CP_Pos_PrintBarcode(
+      h,
+      AutoReplyPrint.CP_Pos_BarcodeType_EAN13,
+      "123456789012"
+    )
+
+    val result =
+      AutoReplyPrint.INSTANCE.CP_Pos_FeedLine(
+        h,
+        3
+      )
+
   }
 }
 
