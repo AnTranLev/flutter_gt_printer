@@ -109,7 +109,7 @@ class _MyAppState extends State<MyApp> {
                           ),
                           TextButton(
                             onPressed: () {
-                              onPrintImage(printer);
+                              onPrintPrinterInfo(printer);
                             },
                             child: const Text('Print Printer info'),
                           ),
