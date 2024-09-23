@@ -181,8 +181,11 @@ class _MyAppState extends State<MyApp> {
       GTCommand command = GTCommand();
       List<Map<String, dynamic>> commands = [];
 
-      String text = "Hello world from Flutter";
-      command.append(text);
+      commands.add(command.addBarcode(
+        barcode: '0000081002345',
+        type: BarcodeType.ean13,
+        position: BarcodeTextPrintPosition.belowBarcode,
+      ));
 
       final data = await GtPrinterPlatform.instance.onPrint(printer, commands);
       logger.d('Did discover ${data?.length}');

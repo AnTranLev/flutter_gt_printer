@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'models/enums.dart';
 
 class GTCommand {
   String _enumText(dynamic enumName) {
@@ -69,24 +70,16 @@ class GTCommand {
   //   };
   // }
 
-  // Map<String, dynamic> addBarcode({
-  //   required String barcode,
-  //   Epos2Barcode type = Epos2Barcode.EPOS2_BARCODE_EAN13,
-  //   int? width,
-  //   int? height,
-  //   EpsonEPOSFont font = EpsonEPOSFont.FONT_A,
-  //   Epos2Hri position = Epos2Hri.EPOS2_HRI_BELOW,
-  // }) {
-  //   final fontData = _enumText(font);
-
-  //   return {
-  //     "id": "addBarcode",
-  //     "barcode": barcode,
-  //     "width": width,
-  //     "height": height,
-  //     "font": fontData,
-  //     "position": position.value,
-  //     "type": type.value,
-  //   };
-  // }
+  Map<String, dynamic> addBarcode({
+    required String barcode,
+    BarcodeType type = BarcodeType.ean13,
+    BarcodeTextPrintPosition position = BarcodeTextPrintPosition.belowBarcode,
+  }) {
+    return {
+      "id": "addBarcode",
+      "barcode": barcode,
+      "position": position.value,
+      "type": type.value,
+    };
+  }
 }

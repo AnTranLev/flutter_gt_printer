@@ -7,7 +7,6 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.location.LocationManager
 import android.os.Build
 import android.os.Handler
@@ -16,9 +15,9 @@ import android.util.Log
 import androidx.annotation.NonNull
 import androidx.core.app.ActivityCompat
 import com.caysn.autoreplyprint.AutoReplyPrint
+import com.caysn.autoreplyprint.AutoReplyPrint.CP_Label_BarcodeType_EAN13
 import com.caysn.autoreplyprint.AutoReplyPrint.CP_OnBluetoothDeviceDiscovered_Callback
 import com.caysn.autoreplyprint.AutoReplyPrint.CP_OnNetPrinterDiscovered_Callback
-import com.sun.jna.Native
 import com.sun.jna.Pointer
 import com.sun.jna.WString
 import com.sun.jna.ptr.IntByReference
@@ -467,6 +466,67 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
             "appendText: $commandValue"
           )
           AutoReplyPrint.INSTANCE.CP_Pos_PrintTextInUTF8(printer, WString(commandValue.toString()))
+        }
+
+        "addBarcode" -> {
+          var barcode = ""
+          val code = command["barcode"] as? String
+          if (code != null) {
+            barcode = code
+          }
+
+          var type = CP_Label_BarcodeType_EAN13
+          val codeType = command["type"] as? Int
+          if (codeType != null) {
+            type = codeType
+          }
+
+          var textPosition = AutoReplyPrint.CP_Label_BarcodeTextPrintPosition_BelowBarcode
+          val position =
+            command["position"] as? Int
+          if (position != null) {
+            textPosition = position
+          }
+
+          Log.d(
+            logTag,
+            "addBarcode: $barcode $type $textPosition"
+          )
+
+          AutoReplyPrint.INSTANCE.CP_Label_PageBegin(
+            printer,
+            0,
+            0,
+            384,
+            400,
+            AutoReplyPrint.CP_Label_Rotation_0
+          )
+          AutoReplyPrint.INSTANCE.CP_Label_DrawBox(
+            printer,
+            0,
+            0,
+            384,
+            400,
+            1,
+            AutoReplyPrint.CP_Label_Color_Black
+          )
+
+          AutoReplyPrint.INSTANCE.CP_Label_DrawBarcode(
+            printer,
+            10,
+            10,
+            AutoReplyPrint.CP_Label_BarcodeType_EAN13,
+            AutoReplyPrint.CP_Label_BarcodeTextPrintPosition_BelowBarcode,
+            60,
+            2,
+            AutoReplyPrint.CP_Label_Rotation_0,
+            barcode
+          )
+
+          val result = AutoReplyPrint.INSTANCE.CP_Label_PagePrint(
+              printer,
+              1
+            )
         }
       }
     }
