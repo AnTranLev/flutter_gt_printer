@@ -107,6 +107,12 @@ class _MyAppState extends State<MyApp> {
                             },
                             child: const Text('Print Image'),
                           ),
+                          TextButton(
+                            onPressed: () {
+                              onPrintImage(printer);
+                            },
+                            child: const Text('Print Printer info'),
+                          ),
                         ],
                       ),
                     ],
@@ -205,6 +211,19 @@ class _MyAppState extends State<MyApp> {
       commands.add(command.printBitmap(base64String));
 
       logger.d('${resizedImage.width} - ${resizedImage.height}');
+
+      final data = await GtPrinterPlatform.instance.onPrint(printer, commands);
+      logger.d('Did discover ${data?.length}');
+    } catch (e) {
+      logger.e("Error: $e");
+    }
+  }
+
+  void onPrintPrinterInfo(PrinterModel printer) async {
+    try {
+      GTCommand command = GTCommand();
+      List<Map<String, dynamic>> commands = [];
+      commands.add(command.printPrinterInfo());
 
       final data = await GtPrinterPlatform.instance.onPrint(printer, commands);
       logger.d('Did discover ${data?.length}');

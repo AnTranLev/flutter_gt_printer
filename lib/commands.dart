@@ -32,6 +32,11 @@ class GTCommand {
     return cmd;
   }
 
+  Map<String, dynamic> printPrinterInfo() {
+    Map<String, dynamic> cmd = {"id": "printPrinterInfo", "value": true};
+    return cmd;
+  }
+
   // Map<String, dynamic> addTextFont(EpsonEPOSFont data) {
   //   final cutData = _enumText(data);
   //   return {"id": "addTextFont", "value": cutData};
