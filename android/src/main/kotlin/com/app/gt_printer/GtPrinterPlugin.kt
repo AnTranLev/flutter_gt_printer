@@ -655,6 +655,10 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
       val str_printer_resolution =
         "Width: " + width_mm.value + " Height: " + height_mm.value + " DotsPerMM: " + dots_per_mm.value + "\r\n"
 
+      Log.e(
+        logTag,
+        "printPrinterInfo: $str_printer_resolution"
+      )
       val printerInfo = str_printer_resolution
 
       AutoReplyPrint.INSTANCE.CP_Pos_PrintText(h, printerInfo)
