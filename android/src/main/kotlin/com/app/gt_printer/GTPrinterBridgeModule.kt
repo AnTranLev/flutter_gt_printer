@@ -129,9 +129,7 @@ class GTPrinterBridgeModule(private val context: Context) {
                             )
                         }
 
-                        AutoReplyPrint.INSTANCE.CP_Pos_FeedAndHalfCutPaper(
-                            h
-                        )
+                        AutoReplyPrint.INSTANCE.CP_Pos_FeedAndHalfCutPaper(h)
                         val resultMessage =
                             queryPrintResultMessage(
                                 h

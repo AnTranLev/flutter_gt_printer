@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:gt_printer/commands.dart';
 import 'package:gt_printer/gt_printer.dart';
 import 'package:gt_printer/gt_printer_method_channel.dart';
 import 'package:gt_printer/gt_printer_platform_interface.dart';
@@ -65,27 +67,53 @@ class _MyAppState extends State<MyApp> {
           title: const Text('GT Printer Plugin'),
         ),
         body: SafeArea(
-          child: Row(
+          child: Column(
             mainAxisSize: MainAxisSize.max,
             children: [
-              Column(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Text('Running on: $_platformVersion\n'),
-                  ElevatedButton(
-                      onPressed: () => onDiscovery(PrinterPortType.tcp),
-                      child: const Text('Discovery TCP')),
-                  ElevatedButton(
-                      onPressed: () => onDiscovery(PrinterPortType.usb),
-                      child: const Text('Discovery USB')),
-                  ElevatedButton(
-                      onPressed: () => onDiscovery(PrinterPortType.bluetooth),
-                      child: const Text('Discovery Bluetooth')),
-                  ElevatedButton(
-                      onPressed: () => onBleRequestPermission(),
-                      child: const Text('Request runtime permission')),
-                ],
-              ),
+              Text('Running on: $_platformVersion\n'),
+              ElevatedButton(
+                  onPressed: () => onDiscovery(PrinterPortType.tcp),
+                  child: const Text('Discovery TCP')),
+              ElevatedButton(
+                  onPressed: () => onDiscovery(PrinterPortType.usb),
+                  child: const Text('Discovery USB')),
+              ElevatedButton(
+                  onPressed: () => onDiscovery(PrinterPortType.bluetooth),
+                  child: const Text('Discovery Bluetooth')),
+              ElevatedButton(
+                  onPressed: () => onBleRequestPermission(),
+                  child: const Text('Request runtime permission')),
+              ListView.builder(
+                itemBuilder: (BuildContext context, int index) {
+                  final printer = printers[index];
+                  return Column(
+                    children: [
+                      Text('${printer.model}'),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              onPrintText(printer);
+                            },
+                            child: const Text('Print Text'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              onPrintBarcode(printer);
+                            },
+                            child: const Text('Print Barcode'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+                itemCount: printers.length,
+                primary: false,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+              )
             ],
           ),
         ),
@@ -97,17 +125,25 @@ class _MyAppState extends State<MyApp> {
     try {
       List<PrinterModel>? data =
           await GtPrinterPlatform.instance.onDiscovery(type: type);
+
       logger.d('Did discover ${data?.length}');
       if (data != null && data.isNotEmpty) {
         for (var element in data) {
           logger.d(element.toJson());
         }
+
         setState(() {
-          printers = data;
+          printers = data!;
         });
       } else {
+        if (kDebugMode) {
+          data = [];
+          data.add(PrinterModel(
+              type: PrinterPortType.usb.value,
+              model: "USD Debug printer model"));
+        }
         setState(() {
-          printers = [];
+          printers = data ?? [];
         });
       }
     } catch (e) {
@@ -123,5 +159,35 @@ class _MyAppState extends State<MyApp> {
       Permission.bluetoothScan,
     ].request();
     logger.d(statuses[Permission.bluetooth]);
+  }
+
+  void onPrintText(PrinterModel printer) async {
+    try {
+      GTCommand command = GTCommand();
+      List<Map<String, dynamic>> commands = [];
+
+      commands
+          .add(command.append('Đây bước chân kẻ phong trần Lang thang cõi\n'));
+
+      final data = await GtPrinterPlatform.instance.onPrint(printer, commands);
+      logger.d('Did discover ${data?.length}');
+    } catch (e) {
+      logger.e("Error: $e");
+    }
+  }
+
+  void onPrintBarcode(PrinterModel printer) async {
+    try {
+      GTCommand command = GTCommand();
+      List<Map<String, dynamic>> commands = [];
+
+      String text = "Hello world from Flutter";
+      command.append(text);
+
+      final data = await GtPrinterPlatform.instance.onPrint(printer, commands);
+      logger.d('Did discover ${data?.length}');
+    } catch (e) {
+      logger.e("Error: $e");
+    }
   }
 }
