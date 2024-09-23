@@ -431,6 +431,8 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
         return
       }
 
+      resetPrinter(printerPointer)
+
       commands.forEach {
         onGenerateCommand(printerPointer, it)
       }
@@ -448,9 +450,19 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
     }
   }
 
+  private fun resetPrinter(h: Pointer) {
+    AutoReplyPrint.INSTANCE.CP_Pos_ResetPrinter(h)
+    AutoReplyPrint.INSTANCE.CP_Pos_SetMultiByteMode(
+      h
+    )
+    AutoReplyPrint.INSTANCE.CP_Pos_SetMultiByteEncoding(
+      h,
+      AutoReplyPrint.CP_MultiByteEncoding_UTF8
+    )
+  }
 
   private fun onGenerateCommand(
-    printer: Pointer,
+    h: Pointer,
     command: Map<String, Any>
   ) {
     Log.d(logTag, "onGenerateCommand: $command")
@@ -465,7 +477,7 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
             logTag,
             "appendText: $commandValue"
           )
-          AutoReplyPrint.INSTANCE.CP_Pos_PrintTextInUTF8(printer, WString(commandValue.toString()))
+          AutoReplyPrint.INSTANCE.CP_Pos_PrintTextInUTF8(h, WString(commandValue.toString()))
         }
 
         "addBarcode" -> {
@@ -493,40 +505,28 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
             "addBarcode: $barcode $type $textPosition"
           )
 
-          AutoReplyPrint.INSTANCE.CP_Label_PageBegin(
-            printer,
-            0,
-            0,
-            384,
-            400,
-            AutoReplyPrint.CP_Label_Rotation_0
+          AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeUnitWidth(
+            h,
+            2
           )
-          AutoReplyPrint.INSTANCE.CP_Label_DrawBox(
-            printer,
-            0,
-            0,
-            384,
-            400,
-            1,
-            AutoReplyPrint.CP_Label_Color_Black
+          AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeHeight(
+            h,
+            60
+          )
+          AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeReadableTextFontType(
+            h,
+            0
+          )
+          AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeReadableTextPosition(
+            h,
+            textPosition
           )
 
-          AutoReplyPrint.INSTANCE.CP_Label_DrawBarcode(
-            printer,
-            10,
-            10,
-            AutoReplyPrint.CP_Label_BarcodeType_EAN13,
-            AutoReplyPrint.CP_Label_BarcodeTextPrintPosition_BelowBarcode,
-            60,
-            2,
-            AutoReplyPrint.CP_Label_Rotation_0,
+          AutoReplyPrint.INSTANCE.CP_Pos_PrintBarcode(
+            h,
+            type,
             barcode
           )
-
-          val result = AutoReplyPrint.INSTANCE.CP_Label_PagePrint(
-              printer,
-              1
-            )
         }
       }
     }
