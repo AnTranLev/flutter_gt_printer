@@ -13,6 +13,7 @@ import 'package:gt_printer/models/enums.dart';
 import 'package:gt_printer/models/models.dart';
 import 'package:logger/logger.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:image/image.dart' as img;
 
 final logger = Logger();
 
@@ -188,9 +189,18 @@ class _MyAppState extends State<MyApp> {
       final ByteData imageData = await rootBundle.load('assets/barcode.png');
       // Convert the image to Uint8List
       final Uint8List bytes = imageData.buffer.asUint8List();
-      // Encode the image bytes as a Base64 string
-      final String base64String = base64Encode(bytes);
-      logger.d("Image: ${imageData.lengthInBytes}");
+      // Decode the image using the 'image' package
+      img.Image? originalImage = img.decodeImage(bytes);
+      if (originalImage == null) {
+        throw Exception("Failed to decode image");
+      }
+      // Scale the image to 384 pixels in width while maintaining the aspect ratio
+      img.Image resizedImage = img.copyResize(originalImage, width: 384);
+      // Encode the resized image to PNG format
+      Uint8List resizedImageBytes =
+          Uint8List.fromList(img.encodePng(resizedImage));
+      // Convert the image bytes to a Base64 string
+      String base64String = base64Encode(resizedImageBytes);
 
       commands.add(command.printBitmap(base64String));
 
