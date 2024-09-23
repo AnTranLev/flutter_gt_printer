@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -100,9 +102,9 @@ class _MyAppState extends State<MyApp> {
                           ),
                           TextButton(
                             onPressed: () {
-                              onPrintBarcode(printer);
+                              onPrintImage(printer);
                             },
-                            child: const Text('Print Barcode'),
+                            child: const Text('Print Image'),
                           ),
                         ],
                       ),
@@ -177,16 +179,20 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void onPrintBarcode(PrinterModel printer) async {
+  void onPrintImage(PrinterModel printer) async {
     try {
       GTCommand command = GTCommand();
       List<Map<String, dynamic>> commands = [];
 
-      commands.add(command.addBarcode(
-        barcode: '0000081002345',
-        type: BarcodeType.ean13,
-        position: BarcodeTextPrintPosition.belowBarcode,
-      ));
+      // Load the image as a byte array
+      final ByteData imageData = await rootBundle.load('assets/barcode.png');
+      // Convert the image to Uint8List
+      final Uint8List bytes = imageData.buffer.asUint8List();
+      // Encode the image bytes as a Base64 string
+      final String base64String = base64Encode(bytes);
+      logger.d("Image: ${imageData.lengthInBytes}");
+
+      commands.add(command.printBitmap(base64String));
 
       final data = await GtPrinterPlatform.instance.onPrint(printer, commands);
       logger.d('Did discover ${data?.length}');

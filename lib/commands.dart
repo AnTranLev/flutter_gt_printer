@@ -1,14 +1,6 @@
 import 'models/enums.dart';
 
 class GTCommand {
-  String _enumText(dynamic enumName) {
-    List<String> ns = enumName.toString().split('.');
-    if (ns.isNotEmpty) {
-      return ns.last;
-    }
-    return enumName.toString();
-  }
-
   Map<String, dynamic> append(String data) {
     return {"id": "appendText", "value": data};
   }
@@ -34,13 +26,8 @@ class GTCommand {
   //   return {"id": "addTextAlign", "value": cutData};
   // }
 
-  Map<String, dynamic> appendBitmap(
-      dynamic data, int width, int height, int posX, int posY) {
-    Map<String, dynamic> cmd = {"id": "addImage", "value": data};
-    cmd['width'] = width;
-    cmd['height'] = height;
-    cmd['posX'] = posX;
-    cmd['posY'] = posY;
+  Map<String, dynamic> printBitmap(String data) {
+    Map<String, dynamic> cmd = {"id": "printImage", "value": data};
 
     return cmd;
   }
@@ -69,16 +56,16 @@ class GTCommand {
   //   };
   // }
 
-  Map<String, dynamic> addBarcode({
-    required String barcode,
-    BarcodeType type = BarcodeType.ean13,
-    BarcodeTextPrintPosition position = BarcodeTextPrintPosition.belowBarcode,
-  }) {
-    return {
-      "id": "addBarcode",
-      "barcode": barcode,
-      "position": position.value,
-      "type": type.value,
-    };
-  }
+  // Map<String, dynamic> addBarcode({
+  //   required String barcode,
+  //   BarcodeType type = BarcodeType.ean13,
+  //   BarcodeTextPrintPosition position = BarcodeTextPrintPosition.belowBarcode,
+  // }) {
+  //   return {
+  //     "id": "addBarcode",
+  //     "barcode": barcode,
+  //     "position": position.value,
+  //     "type": type.value,
+  //   };
+  // }
 }

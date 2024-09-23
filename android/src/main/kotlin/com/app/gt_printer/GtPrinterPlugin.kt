@@ -7,10 +7,13 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.location.LocationManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.util.Base64
 import android.util.Log
 import androidx.annotation.NonNull
 import androidx.core.app.ActivityCompat
@@ -21,6 +24,7 @@ import com.caysn.autoreplyprint.AutoReplyPrint.CP_OnNetPrinterDiscovered_Callbac
 import com.sun.jna.Pointer
 import com.sun.jna.WString
 import com.sun.jna.ptr.IntByReference
+import com.sun.jna.ptr.LongByReference
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -436,12 +440,14 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
       commands.forEach {
         onGenerateCommand(printerPointer, it)
       }
+      val resultMessage = queryPrintResultMessage(printerPointer)
 
       AutoReplyPrint.INSTANCE.CP_Pos_FeedAndHalfCutPaper(printerPointer)
       disconnectPrinter(printerPointer)
 
+
       resp.success = true
-      resp.message = "Printed $target"
+      resp.message = "Printed $target - $resultMessage"
       Log.d(logTag, resp.toJSON())
       result.success(resp.toJSON());
     } catch (e: Exception) {
@@ -462,6 +468,7 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
       h,
       AutoReplyPrint.CP_MultiByteEncoding_UTF8
     )
+    AutoReplyPrint.INSTANCE.CP_Pos_SetCharacterCodepage(h, AutoReplyPrint.CP_CharacterCodepage_TCVN3)
   }
 
   private fun onGenerateCommand(
@@ -508,8 +515,6 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
             "addBarcode: $barcode $type $textPosition"
           )
 
-          Test_Pos_PrintBarcode(h)
-
 //          AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeUnitWidth(
 //            h,
 //            2
@@ -533,6 +538,37 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
 //            barcode
 //          )
         }
+
+        "printImage" -> {
+          try {
+            val bitmap: Bitmap? =
+              convertBase64toBitmap(commandValue as String)
+            Log.d(
+              logTag,
+              "appendBitmap: bitmap ${bitmap?.byteCount}"
+            )
+            if (bitmap != null) {
+              AutoReplyPrint.CP_Pos_PrintRasterImageFromData_Helper.PrintRasterImageFromBitmap(
+                  h,
+                  bitmap.width,
+                  bitmap.height,
+                  bitmap,
+                  AutoReplyPrint.CP_ImageBinarizationMethod_Thresholding,
+                  AutoReplyPrint.CP_ImageCompressionMethod_None
+                )
+            } else {
+              throw Exception("Print failed! Cannot convert image URL to bitmap")
+            }
+
+          } catch (e: Exception) {
+
+            Log.e(
+              logTag,
+              "onGenerateCommand Error" + e.localizedMessage
+            )
+            throw e
+          }
+        }
       }
     }
   }
@@ -545,45 +581,57 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
     }
   }
 
-  fun Test_Pos_PrintBarcode(h: Pointer?) {
-    AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeUnitWidth(
-      h,
-      2
-    )
-    AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeHeight(
-      h,
-      60
-    )
-    AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeReadableTextFontType(
-      h,
-      0
-    )
-    AutoReplyPrint.INSTANCE.CP_Pos_SetBarcodeReadableTextPosition(
-      h,
-      AutoReplyPrint.CP_Pos_BarcodeTextPrintPosition_BelowBarcode
-    )
-    AutoReplyPrint.INSTANCE.CP_Pos_PrintBarcode(
-      h,
-      AutoReplyPrint.CP_Pos_BarcodeType_UPCA,
-      "01234567890"
-    )
-    AutoReplyPrint.INSTANCE.CP_Pos_PrintBarcode(
-      h,
-      AutoReplyPrint.CP_Pos_BarcodeType_UPCE,
-      "123456"
-    )
-    AutoReplyPrint.INSTANCE.CP_Pos_PrintBarcode(
-      h,
-      AutoReplyPrint.CP_Pos_BarcodeType_EAN13,
-      "123456789012"
-    )
+  private fun convertBase64toBitmap(base64Str: String): Bitmap? {
+    val decodedBytes: ByteArray = Base64.decode(base64Str, Base64.DEFAULT)
+    return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+  }
 
+  private fun queryPrintResultMessage(h: Pointer): String {
     val result =
-      AutoReplyPrint.INSTANCE.CP_Pos_FeedLine(
-        h,
-        3
+      AutoReplyPrint.INSTANCE.CP_Pos_QueryPrintResult(
+        h, 0, 30000
       )
-
+    if (!result) {
+      val printerErrorStatus =
+        LongByReference()
+      val printerInfoStatus =
+        LongByReference()
+      val timestampMsPrinterStatus =
+        LongByReference()
+      return if (AutoReplyPrint.INSTANCE.CP_Printer_GetPrinterStatusInfo(
+          h,
+          printerErrorStatus,
+          printerInfoStatus,
+          timestampMsPrinterStatus
+        )
+      ) {
+        var errorStatusString =
+          String.format(
+            "Printer Error Status: 0x%04X",
+            printerErrorStatus.value and 0xffff
+          )
+        val status =
+          AutoReplyPrint.CP_PrinterStatus(
+            printerErrorStatus.value,
+            printerInfoStatus.value
+          )
+        if (status.ERROR_OCCURED()) {
+          if (status.ERROR_CUTTER()) errorStatusString += "[ERROR_CUTTER]"
+          if (status.ERROR_FLASH()) errorStatusString += "[ERROR_FLASH]"
+          if (status.ERROR_NOPAPER()) errorStatusString += "[ERROR_NOPAPER]"
+          if (status.ERROR_VOLTAGE()) errorStatusString += "[ERROR_VOLTAGE]"
+          if (status.ERROR_MARKER()) errorStatusString += "[ERROR_MARKER]"
+          if (status.ERROR_ENGINE()) errorStatusString += "[ERROR_ENGINE]"
+          if (status.ERROR_OVERHEAT()) errorStatusString += "[ERROR_OVERHEAT]"
+          if (status.ERROR_COVERUP()) errorStatusString += "[ERROR_COVERUP]"
+          if (status.ERROR_MOTOR()) errorStatusString += "[ERROR_MOTOR]"
+        }
+        errorStatusString
+      } else {
+        "CP_Printer_GetPrinterStatusInfo Failed"
+      }
+    }
+    return "Success"
   }
 }
 
