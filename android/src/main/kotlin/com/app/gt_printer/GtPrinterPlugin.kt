@@ -641,81 +641,21 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
   }
 
   private fun printPrinterInfo(h: Pointer) {
-    val firmware_version =
-      AutoReplyPrint.CP_Printer_GetPrinterFirmwareVersion_Helper.GetPrinterFirmwareVersion(
-        h
-      ) + "\r\n"
     val width_mm = IntByReference()
     val height_mm = IntByReference()
     val dots_per_mm = IntByReference()
-    val printer_error_status = LongByReference()
-    val printer_info_status = LongByReference()
-    val printer_received_byte_count =
-      IntByReference()
-    val printer_printed_page_id = IntByReference()
-    val timestamp_ms_printer_status =
-      LongByReference()
-    val timestamp_ms_printer_received =
-      LongByReference()
-    val timestamp_ms_printer_printed =
-      LongByReference()
+
     if (AutoReplyPrint.INSTANCE.CP_Printer_GetPrinterResolutionInfo(
         h,
         width_mm,
         height_mm,
         dots_per_mm
-      ) &&
-      AutoReplyPrint.INSTANCE.CP_Printer_GetPrinterStatusInfo(
-        h,
-        printer_error_status,
-        printer_info_status,
-        timestamp_ms_printer_status
-      ) &&
-      AutoReplyPrint.INSTANCE.CP_Printer_GetPrinterReceivedInfo(
-        h,
-        printer_received_byte_count,
-        timestamp_ms_printer_received
-      ) &&
-      AutoReplyPrint.INSTANCE.CP_Printer_GetPrinterPrintedInfo(
-        h,
-        printer_printed_page_id,
-        timestamp_ms_printer_printed
       )
     ) {
-      val dt_printer_status =
-        Date(timestamp_ms_printer_status.value)
-      val dt_printer_received =
-        Date(timestamp_ms_printer_received.value)
-      val dt_printer_printed =
-        Date(timestamp_ms_printer_printed.value)
-      val simpleDateFormat =
-        SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
       val str_printer_resolution =
         "Width: " + width_mm.value + " Height: " + height_mm.value + " DotsPerMM: " + dots_per_mm.value + "\r\n"
-      val str_printer_error_status =
-        simpleDateFormat.format(dt_printer_status) + String.format(
-          " Printer Error Status: 0x%04X\r\n",
-          printer_error_status.value and 0xffffL
-        )
-      val str_printer_info_status =
-        simpleDateFormat.format(dt_printer_status) + String.format(
-          " Printer Error Status: 0x%04X\r\n",
-          printer_info_status.value and 0xffffL
-        )
-      val str_printer_received =
-        simpleDateFormat.format(
-          dt_printer_received
-        ) + String.format(
-          " Printer Received Byte Count: %d\r\n",
-          printer_received_byte_count.value
-        )
-      val str_printer_printed =
-        simpleDateFormat.format(dt_printer_printed) + String.format(
-          " Printer Printed Page ID: %d\r\n",
-          printer_printed_page_id.value
-        )
 
-      val printerInfo = firmware_version + str_printer_resolution + str_printer_error_status + str_printer_info_status + str_printer_received + str_printer_printed
+      val printerInfo = str_printer_resolution
 
       AutoReplyPrint.INSTANCE.CP_Pos_PrintText(h, printerInfo)
     }
