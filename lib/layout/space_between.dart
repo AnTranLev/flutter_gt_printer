@@ -1,4 +1,4 @@
-import 'package:epson_epos/layout/word_wrap.dart';
+import 'package:gt_printer/layout/word_wrap.dart';
 
 class SpaceBetweenParams {
   String left;
