@@ -461,14 +461,14 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
 
   private fun resetPrinter(h: Pointer) {
     AutoReplyPrint.INSTANCE.CP_Pos_ResetPrinter(h)
-    AutoReplyPrint.INSTANCE.CP_Pos_SetMultiByteMode(
-      h
-    )
-    AutoReplyPrint.INSTANCE.CP_Pos_SetMultiByteEncoding(
-      h,
-      AutoReplyPrint.CP_MultiByteEncoding_UTF8
-    )
-    AutoReplyPrint.INSTANCE.CP_Pos_SetCharacterCodepage(h, AutoReplyPrint.CP_CharacterCodepage_TCVN3)
+//    AutoReplyPrint.INSTANCE.CP_Pos_SetMultiByteMode(
+//      h
+//    )
+//    AutoReplyPrint.INSTANCE.CP_Pos_SetMultiByteEncoding(
+//      h,
+//      AutoReplyPrint.CP_MultiByteEncoding_UTF8
+//    )
+//    AutoReplyPrint.INSTANCE.CP_Pos_SetCharacterCodepage(h, AutoReplyPrint.CP_CharacterCodepage_TCVN3)
   }
 
   private fun onGenerateCommand(
