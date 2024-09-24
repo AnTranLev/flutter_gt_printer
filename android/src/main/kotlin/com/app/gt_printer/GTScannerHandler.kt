@@ -1,4 +1,4 @@
-package com.app.gt_printer
+ package com.app.gt_printer
 
 import android.content.Context
 import com.zebra.scannercontrol.DCSSDKDefs
