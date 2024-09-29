@@ -34,7 +34,7 @@ class MethodChannelGtPrinter extends GtPrinterPlatform {
   }
 
   @override
-  Future<List<PrinterModel>?> onDiscovery(
+  Future<List<GTPrinterModel>?> onDiscovery(
       {PrinterPortType type = PrinterPortType.usb}) async {
     if (!_isPrinterPlatformSupport(throwError: true)) return null;
     String printType = type.value;
@@ -51,7 +51,7 @@ class MethodChannelGtPrinter extends GtPrinterPlatform {
         if (prs.isNotEmpty) {
           return prs.map((e) {
             final modelName = e['model'];
-            return PrinterModel(
+            return GTPrinterModel(
               ipAddress: e['ipAddress'],
               bdAddress: e['bdAddress'],
               macAddress: e['macAddress'],
@@ -72,7 +72,7 @@ class MethodChannelGtPrinter extends GtPrinterPlatform {
 
   @override
   Future<dynamic> onPrint(
-      PrinterModel printer, List<Map<String, dynamic>> commands) async {
+      GTPrinterModel printer, List<Map<String, dynamic>> commands) async {
     final Map<String, dynamic> params = {
       "type": printer.type,
       "commands": commands,

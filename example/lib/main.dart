@@ -32,7 +32,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
   final _gtPrinterPlugin = GtPrinter();
-  List<PrinterModel> printers = [];
+  List<GTPrinterModel> printers = [];
 
   @override
   void initState() {
@@ -132,7 +132,7 @@ class _MyAppState extends State<MyApp> {
 
   onDiscovery(PrinterPortType type) async {
     try {
-      List<PrinterModel>? data =
+      List<GTPrinterModel>? data =
           await GtPrinterPlatform.instance.onDiscovery(type: type);
 
       logger.d('Did discover ${data?.length}');
@@ -147,7 +147,7 @@ class _MyAppState extends State<MyApp> {
       } else {
         if (kDebugMode) {
           data = [];
-          data.add(PrinterModel(
+          data.add(GTPrinterModel(
               type: PrinterPortType.usb.value,
               model: "USD Debug printer model"));
         }
@@ -170,7 +170,7 @@ class _MyAppState extends State<MyApp> {
     logger.d(statuses[Permission.bluetooth]);
   }
 
-  void onPrintText(PrinterModel printer) async {
+  void onPrintText(GTPrinterModel printer) async {
     try {
       GTCommand command = GTCommand();
       List<Map<String, dynamic>> commands = [];
@@ -186,7 +186,7 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void onPrintImage(PrinterModel printer) async {
+  void onPrintImage(GTPrinterModel printer) async {
     try {
       GTCommand command = GTCommand();
       List<Map<String, dynamic>> commands = [];
@@ -219,7 +219,7 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void onPrintPrinterInfo(PrinterModel printer) async {
+  void onPrintPrinterInfo(GTPrinterModel printer) async {
     try {
       GTCommand command = GTCommand();
       List<Map<String, dynamic>> commands = [];

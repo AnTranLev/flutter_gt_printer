@@ -7,7 +7,7 @@ import 'package:gt_printer/models/models.dart';
 const DEFAULT_PAPER_WIDTH = 80;
 
 Map<String, dynamic> addTextLine(
-    PrinterModel printer, SpaceBetweenParams params) {
+    GTPrinterModel printer, SpaceBetweenParams params) {
   final printerCharsPerLinePerWidth = getFontACharsPerLine(printer.model ?? '');
   // final setting = await EpsonEPOS.getPrinterSetting(printer);
 

@@ -4,7 +4,7 @@ import 'dart:convert';
 ///
 /// Printer Model
 ///
-class PrinterModel {
+class GTPrinterModel {
   /// Connectivity type: TCP | BT | USB
   String? type;
 
@@ -14,7 +14,7 @@ class PrinterModel {
   String? macAddress;
   String? model;
   String? target;
-  PrinterModel({
+  GTPrinterModel({
     this.type,
     this.ipAddress,
     this.bdAddress,
@@ -23,7 +23,7 @@ class PrinterModel {
     this.target,
   });
 
-  PrinterModel copyWith({
+  GTPrinterModel copyWith({
     String? type,
     String? ipAddress,
     String? bdAddress,
@@ -31,7 +31,7 @@ class PrinterModel {
     String? model,
     String? target,
   }) {
-    return PrinterModel(
+    return GTPrinterModel(
       type: type ?? this.type,
       ipAddress: ipAddress ?? this.ipAddress,
       bdAddress: bdAddress ?? this.bdAddress,
@@ -52,8 +52,8 @@ class PrinterModel {
     };
   }
 
-  factory PrinterModel.fromMap(Map<String, dynamic> map) {
-    return PrinterModel(
+  factory GTPrinterModel.fromMap(Map<String, dynamic> map) {
+    return GTPrinterModel(
       type: map['type'] != null ? map['type'] as String : null,
       ipAddress: map['ipAddress'] != null ? map['ipAddress'] as String : null,
       bdAddress: map['bdAddress'] != null ? map['bdAddress'] as String : null,
@@ -66,8 +66,8 @@ class PrinterModel {
 
   String toJson() => json.encode(toMap());
 
-  factory PrinterModel.fromJson(String source) =>
-      PrinterModel.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory GTPrinterModel.fromJson(String source) =>
+      GTPrinterModel.fromMap(json.decode(source) as Map<String, dynamic>);
 
   @override
   String toString() {
@@ -75,7 +75,7 @@ class PrinterModel {
   }
 
   @override
-  bool operator ==(covariant PrinterModel other) {
+  bool operator ==(covariant GTPrinterModel other) {
     if (identical(this, other)) return true;
 
     return other.type == type &&

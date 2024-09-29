@@ -29,14 +29,14 @@ abstract class GtPrinterPlatform extends PlatformInterface {
     throw UnimplementedError('platformVersion() has not been implemented.');
   }
 
-  Future<List<PrinterModel>?> onDiscovery(
+  Future<List<GTPrinterModel>?> onDiscovery(
       {PrinterPortType type = PrinterPortType.usb}) {
     throw UnimplementedError(
         'onDiscovery(PrinterPortType type) has not been implemented.');
   }
 
   Future<dynamic> onPrint(
-      PrinterModel printer, List<Map<String, dynamic>> commands) {
+      GTPrinterModel printer, List<Map<String, dynamic>> commands) {
     throw UnimplementedError(
         'onDiscovery(PrinterPortType type) has not been implemented.');
   }
