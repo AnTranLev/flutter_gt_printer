@@ -3,12 +3,10 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:gt_printer/models/enums.dart';
+import 'package:gt_printer/models/logger.dart';
 import 'package:gt_printer/models/models.dart';
-import 'package:logger/logger.dart';
 
 import 'gt_printer_platform_interface.dart';
-
-var logger = Logger();
 
 /// An implementation of [GtPrinterPlatform] that uses method channels.
 class MethodChannelGtPrinter extends GtPrinterPlatform {

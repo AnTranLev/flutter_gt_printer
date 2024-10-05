@@ -32,8 +32,6 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import java.text.SimpleDateFormat
-import java.util.Date
 
 /** GtPrinterPlugin */
 class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
@@ -48,6 +46,11 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
   private val logTag = "GtPrinterPlugin"
   private lateinit var context: Context
   private lateinit var activity: Activity
+
+  private var gtScannerPlugin: GtScannerPlugin? =
+    null
+  private lateinit var gtScannerChannel: MethodChannel
+
 
   private var printers: ArrayList<PrinterInfo> =
     ArrayList()
@@ -70,13 +73,13 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
   override fun onAttachedToEngine(
     flutterPluginBinding: FlutterPlugin.FlutterPluginBinding
   ) {
-    channel = MethodChannel(
-      flutterPluginBinding.binaryMessenger,
-      "gt_printer"
-    )
+    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "gt_printer")
     channel.setMethodCallHandler(this)
-    context =
-      flutterPluginBinding.applicationContext
+    context = flutterPluginBinding.applicationContext
+
+    gtScannerPlugin = GtScannerPlugin(context)
+    gtScannerChannel = MethodChannel(flutterPluginBinding.binaryMessenger, "gt_scanner")
+    gtScannerChannel.setMethodCallHandler(gtScannerPlugin)
   }
 
   override fun onMethodCall(

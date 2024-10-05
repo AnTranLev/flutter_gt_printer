@@ -9,14 +9,19 @@ import com.zebra.scannercontrol.DCSSDKDefs
 import com.zebra.scannercontrol.DCSScannerInfo
 import com.zebra.scannercontrol.FirmwareUpdateEvent
 import com.zebra.scannercontrol.IDcsSdkApiDelegate
+import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.Result
 
-class GTScannerBridgeModule(context: Context?) :
-    IDcsSdkApiDelegate {
-    private val context: Context?
-    private var eventCallback: Result? = null // Store the callback
+class GtScannerPlugin(context: Context) :
+    IDcsSdkApiDelegate,
+    MethodChannel.MethodCallHandler {
+
+    private var eventCallback: Result? =
+        null // Store the callback
     private val appContext: Context?
         private get() = context?.applicationContext
+    private var context: Context
 
     init {
         this.context = context
@@ -24,14 +29,22 @@ class GTScannerBridgeModule(context: Context?) :
             Handler(Looper.getMainLooper())
 
         mainHandler.post {
-            if (context != null) {
-                GTScannerHandler.getInstance(context)
+            if (this.context != null) {
+                GTScannerHandler.getInstance(this.context)
             }
         }
     }
 
     val name: String
-        get() = "GTScannerPlugin"
+        get() = "GtScannerPlugin"
+
+    override fun onMethodCall(
+        call: MethodCall,
+        rawResult: Result
+    ) {
+        val result = MethodResultWrapper(rawResult)
+        Thread(MethodRunner(call, result)).start()
+    }
 
     override fun dcssdkEventScannerAppeared(
         dcsScannerInfo: DCSScannerInfo
@@ -60,7 +73,8 @@ class GTScannerBridgeModule(context: Context?) :
         i1: Int
     ) {
         val barcode = String(bytes)
-        // Log.i(TAG, barcode);
+        Log.i(TAG, barcode)
+
         // Call the callback if it's registered
         eventCallback?.success(barcode)
     }
@@ -100,16 +114,12 @@ class GTScannerBridgeModule(context: Context?) :
     }
 
     // call to active sdk
-    fun connectScanner() {
-        GTScannerHandler.getInstance(appContext!!)
-            .setDelegate(this)
-        val sdkHandler =
-            GTScannerHandler.getInstance(
-                appContext!!
-            ).getSdkHandler()
-        sdkHandler!!.dcssdkSubsribeForEvents(
-            DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_BARCODE.value
-        )
+    fun connectScanner(scannerCallback: Result?) {
+        GTScannerHandler.getInstance(appContext!!).setDelegate(this)
+        val sdkHandler = GTScannerHandler.getInstance(appContext!!).getSdkHandler()
+        sdkHandler!!.dcssdkSubsribeForEvents(DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_BARCODE.value)
+
+        scannerCallback?.success(true);
     }
 
     // call manual on scan
@@ -120,8 +130,7 @@ class GTScannerBridgeModule(context: Context?) :
             )
         val status = handler.pullTrigger()
         if (status) {
-            eventCallback =
-                scannerCallback // Store the callback
+            eventCallback = scannerCallback // Store the callback
         }
     }
 
@@ -154,7 +163,56 @@ class GTScannerBridgeModule(context: Context?) :
     }
 
     companion object {
-        private const val TAG = "GTScannerPlugin" // Define a tag for logging
+        private const val TAG =
+            "GtScannerPlugin" // Define a tag for logging
+    }
+
+    inner class MethodRunner(
+        call: MethodCall,
+        result: Result
+    ) : Runnable {
+        private val call: MethodCall = call
+        private val result: Result = result
+
+        override fun run() {
+            Log.d(
+                TAG,
+                "Method Called: ${call.method}"
+            )
+            when (call.method) {
+                "getPluginStatus" -> {
+                    result.success("Connected with Android ${android.os.Build.VERSION.RELEASE}")
+                }
+
+                "connectScanner" -> {
+                    connectScanner(result)
+                }
+
+                "offScan" -> {
+                    offScan()
+                }
+
+                "startScan" -> {
+                    startScan(result)
+                }
+
+                "enableScanner" -> {
+                    enableScanner(result)
+                }
+
+                "disableScanner" -> {
+                    disableScanner(result)
+                }
+
+                else -> {
+                    Log.d(
+                        TAG,
+                        "Method: ${call.method} is not supported yet"
+                    )
+                    result.notImplemented()
+                }
+            }
+        }
     }
 }
 

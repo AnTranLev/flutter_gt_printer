@@ -6,9 +6,12 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:gt_printer/commands.dart';
+import 'package:gt_printer/gt_scanner.dart';
 import 'package:gt_printer/gt_printer.dart';
 import 'package:gt_printer/gt_printer_method_channel.dart';
 import 'package:gt_printer/gt_printer_platform_interface.dart';
+import 'package:gt_printer/gt_scanner_method_channel.dart';
+import 'package:gt_printer/gt_scanner_platform_interface.dart';
 import 'package:gt_printer/models/enums.dart';
 import 'package:gt_printer/models/models.dart';
 import 'package:logger/logger.dart';
@@ -19,6 +22,7 @@ final logger = Logger();
 
 void main() {
   GtPrinterPlatform.instance = MethodChannelGtPrinter();
+  GtScannerPlatform.instance = MethodChannelGtScanner();
   runApp(const MyApp());
 }
 
@@ -38,6 +42,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     initPlatformState();
+    initScannerPlatformState();
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -122,7 +127,8 @@ class _MyAppState extends State<MyApp> {
                 primary: false,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-              )
+              ),
+              _buildGTScanner(context),
             ],
           ),
         ),
@@ -230,5 +236,91 @@ class _MyAppState extends State<MyApp> {
     } catch (e) {
       logger.e("Error: $e");
     }
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                 GT Scanner                                 */
+  /* -------------------------------------------------------------------------- */
+  final _gtScannerPlugin = GtScanner();
+  List<GTPrinterModel> scanner = [];
+  String _scannerPluginStatus = '';
+  bool _isConnected = false;
+  String _barcode = '';
+
+  Future<void> initScannerPlatformState() async {
+    String platformStatus;
+    // Platform messages may fail, so we use a try/catch PlatformException.
+    // We also handle the message potentially returning null.
+    try {
+      platformStatus = await _gtScannerPlugin.getPluginStatus() ?? 'not found';
+    } on PlatformException {
+      platformStatus = 'Failed to get platform status.';
+    }
+
+    // If the widget was removed from the tree while the asynchronous platform
+    // message was in flight, we want to discard the reply rather than calling
+    // setState to update our non-existent appearance.
+    if (!mounted) return;
+
+    setState(() {
+      _scannerPluginStatus = platformStatus;
+    });
+  }
+
+  Widget _buildGTScanner(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16.0),
+      child: Column(
+        children: [
+          Text('GT Scanner Plugin - $_scannerPluginStatus'),
+          ElevatedButton(
+            onPressed: () {
+              _connectScanner(context);
+            },
+            child: Text('Connect Scanner - Connect status: $_isConnected'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _startScan(context);
+            },
+            child: const Text('Start Scan - result: $_barcode'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _enableScanner(context);
+            },
+            child: const Text('Enable Scanner'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _disableScanner(context);
+            },
+            child: const Text('Disable Scanner'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _connectScanner(BuildContext context) async {
+    final connect = await GtScannerPlatform.instance.connectScanner();
+    setState(() {
+      _isConnected = connect ?? false;
+    });
+  }
+
+  void _startScan(BuildContext context) async {
+    var barcode = await GtScannerPlatform.instance.startScan();
+    setState(() {
+      _barcode = barcode ?? '';
+    });
+  }
+
+  void _enableScanner(BuildContext context) async {
+    await GtScannerPlatform.instance.enableScanner();
+  }
+
+  void _disableScanner(BuildContext context) async {
+    await GtScannerPlatform.instance.disableScanner();
   }
 }
