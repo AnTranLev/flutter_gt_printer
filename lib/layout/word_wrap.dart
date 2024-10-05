@@ -14,7 +14,7 @@ class WordwrapOptions {
 }
 
 class Wordwrap {
-  List<String> _lines;
+  final List<String> _lines;
   WordwrapOptions options;
 
   Wordwrap(String text, {WordwrapOptions? options})

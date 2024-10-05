@@ -1,5 +1,3 @@
-import 'models/enums.dart';
-
 class GTCommand {
   Map<String, dynamic> append(String data) {
     return {"id": "appendText", "value": data};

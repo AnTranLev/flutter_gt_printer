@@ -118,6 +118,10 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
         "onPrint" -> {
           onPrint(call, result)
         }
+
+        "openCashier" -> {
+          openCashier(call, result)
+        }
 //        "onGetPrinterInfo" -> {
 //          onGetPrinterInfo(call, result)
 //        }
@@ -482,7 +486,8 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
   ) {
     Log.d(logTag, "onGenerateCommand: $command")
 
-    var commandId: String = command["id"] as String
+    var commandId: String =
+      command["id"] as String
     if (!commandId.isNullOrEmpty()) {
       var commandValue = command["value"]
 
@@ -492,7 +497,10 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
             logTag,
             "appendText: $commandValue"
           )
-          AutoReplyPrint.INSTANCE.CP_Pos_PrintTextInUTF8(h, WString(commandValue.toString()))
+          AutoReplyPrint.INSTANCE.CP_Pos_PrintTextInUTF8(
+            h,
+            WString(commandValue.toString())
+          )
         }
 
         "addBarcode" -> {
@@ -508,7 +516,8 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
             type = codeType
           }
 
-          var textPosition = AutoReplyPrint.CP_Label_BarcodeTextPrintPosition_BelowBarcode
+          var textPosition =
+            AutoReplyPrint.CP_Label_BarcodeTextPrintPosition_BelowBarcode
           val position =
             command["position"] as? Int
           if (position != null) {
@@ -558,13 +567,13 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
             )
             if (bitmap != null) {
               AutoReplyPrint.CP_Pos_PrintRasterImageFromData_Helper.PrintRasterImageFromBitmap(
-                  h,
-                  bitmap.width,
-                  bitmap.height,
-                  bitmap,
-                  AutoReplyPrint.CP_ImageBinarizationMethod_Thresholding,
-                  AutoReplyPrint.CP_ImageCompressionMethod_None
-                )
+                h,
+                bitmap.width,
+                bitmap.height,
+                bitmap,
+                AutoReplyPrint.CP_ImageBinarizationMethod_Thresholding,
+                AutoReplyPrint.CP_ImageCompressionMethod_None
+              )
             } else {
               throw Exception("Print failed! Cannot convert image URL to bitmap")
             }
@@ -666,6 +675,27 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
 
       AutoReplyPrint.INSTANCE.CP_Pos_PrintText(h, printerInfo)
     }
+  }
+
+  fun openCashier(@NonNull call: MethodCall, @NonNull result: Result) {
+    val type: String = call.argument<String>("type") as String
+    val target: String = call.argument<String>("target") as String
+
+    var resp = PrinterResult("onPrint${type}", false)
+    var printer: Pointer? = Pointer.NULL
+    try {
+      val h = openPort(target)
+      printer = h
+      AutoReplyPrint.INSTANCE.CP_Pos_KickOutDrawer(h, 0, 100, 100)
+      AutoReplyPrint.INSTANCE.CP_Pos_KickOutDrawer(h, 1, 100, 100)
+      disconnectPrinter(printer)
+      resp.success = true
+    } catch (e: Exception) {
+      disconnectPrinter(printer)
+      resp.message = e.toString()
+    }
+
+    result.success(resp)
   }
 }
 

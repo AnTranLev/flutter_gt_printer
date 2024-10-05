@@ -40,4 +40,8 @@ abstract class GtPrinterPlatform extends PlatformInterface {
     throw UnimplementedError(
         'onDiscovery(PrinterPortType type) has not been implemented.');
   }
+
+  Future<PrinterResponse> openCashier(GTPrinterModel printer) {
+    throw UnimplementedError('openCashier has not been implemented.');
+  }
 }

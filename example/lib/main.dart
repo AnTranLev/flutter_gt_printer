@@ -118,6 +118,12 @@ class _MyAppState extends State<MyApp> {
                             },
                             child: const Text('Print Printer info'),
                           ),
+                          TextButton(
+                            onPressed: () {
+                              openCashier(printer);
+                            },
+                            child: const Text('Open cashier'),
+                          ),
                         ],
                       ),
                     ],
@@ -134,6 +140,11 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
     );
+  }
+
+  openCashier(GTPrinterModel printer) async {
+    final result = await GtPrinterPlatform.instance.openCashier(printer);
+    logger.d(result);
   }
 
   onDiscovery(PrinterPortType type) async {
@@ -283,7 +294,7 @@ class _MyAppState extends State<MyApp> {
             onPressed: () {
               _startScan(context);
             },
-            child: const Text('Start Scan - result: $_barcode'),
+            child: Text('Start Scan - result: $_barcode'),
           ),
           ElevatedButton(
             onPressed: () {

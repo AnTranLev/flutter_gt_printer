@@ -78,4 +78,15 @@ class MethodChannelGtPrinter extends GtPrinterPlatform {
     };
     return await methodChannel.invokeMethod('onPrint', params);
   }
+
+  @override
+  Future<PrinterResponse> openCashier(GTPrinterModel printer) async {
+    final Map<String, dynamic> params = {
+      "type": printer.type,
+      "target": printer.model,
+    };
+    final rep = await methodChannel.invokeMethod('openCashier', params);
+    final response = PrinterResponse.fromRawJson(rep);
+    return response;
+  }
 }
