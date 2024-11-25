@@ -12,6 +12,8 @@ class Discovery {
 
 interface JSONConvertible {
     fun toJSON(): String = Gson().toJson(this)
+    fun toMap(): Map<String, Any?> // Thêm phương thức này
+
 }
 
 class PrinterInfo(
@@ -22,11 +24,31 @@ class PrinterInfo(
     var type: String? = null,
     var printType: String? = null,
     var target: String? =null
-) : JSONConvertible
+) : JSONConvertible {
+    override fun toMap(): Map<String, Any?> {
+        return mapOf(
+            "ipAddress" to ipAddress,
+            "bdAddress" to bdAddress,
+            "macAddress" to macAddress,
+            "model" to model,
+            "type" to type,
+            "printType" to printType,
+            "target" to target
+        )    }
+}
 
 data class PrinterResult(
     var type: String,
     var success: Boolean,
     var message: String? = null,
     var content: Any? = null
-) : JSONConvertible
+) : JSONConvertible {
+    override fun toMap(): Map<String, Any?> {
+        return mapOf(
+            "type" to type,
+            "success" to success,
+            "message" to message,
+            "content" to content
+        )
+    }
+}

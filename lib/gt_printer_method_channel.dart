@@ -86,7 +86,7 @@ class MethodChannelGtPrinter extends GtPrinterPlatform {
       "target": printer.model,
     };
     final rep = await methodChannel.invokeMethod('openCashier', params);
-    final response = PrinterResponse.fromRawJson(rep);
+    final response = PrinterResponse.fromJson(rep);
     return response;
   }
 }

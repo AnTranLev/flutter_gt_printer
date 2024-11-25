@@ -681,7 +681,7 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
     val type: String = call.argument<String>("type") as String
     val target: String = call.argument<String>("target") as String
 
-    var resp = PrinterResult("onPrint${type}", false)
+    val resp = PrinterResult("onPrint${type}", false)
     var printer: Pointer? = Pointer.NULL
     try {
       val h = openPort(target)
@@ -690,13 +690,11 @@ class GtPrinterPlugin: FlutterPlugin, MethodCallHandler,
       AutoReplyPrint.INSTANCE.CP_Pos_KickOutDrawer(h, 1, 100, 100)
       disconnectPrinter(printer)
       resp.success = true
+      resp.message=""
       resp.content = ""
-      resp.message = ""
     } catch (e: Exception) {
       disconnectPrinter(printer)
       resp.message = e.toString()
-      resp.success = false
-      resp.content = e.toString()
     }
 
     result.success(resp)
