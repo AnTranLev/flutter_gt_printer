@@ -131,7 +131,7 @@ class PrinterResponse {
 
   String toRawJson() => json.encode(toJson());
 
-  factory PrinterResponse.fromJson(Map<String, dynamic> json) =>
+  factory PrinterResponse.fromJson(Map json) =>
       PrinterResponse(
         type: json["type"],
         success: json["success"],
